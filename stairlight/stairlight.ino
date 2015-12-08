@@ -1,9 +1,3 @@
-#include <canimationstatus.h>
-#include <clist.h>
-#include <cstage.h>
-#include <cstairs.h>
-#include <generic.h>
-
 /******************************************************************************
 **
 ** Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -93,6 +87,8 @@ void setup()
   // setup the light sensor
   pinMode(lightSensor,            INPUT);   // digital pin as input
   pinMode(lightSensorStatusLed,   OUTPUT);
+
+  stairs.adjustPotentiometers();
 }
 
 // ################################################################################################

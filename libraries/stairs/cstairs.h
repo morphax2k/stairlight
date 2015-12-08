@@ -39,6 +39,7 @@
 #include "cstage.h"
 #include "clist.h"
 #include "generic.h"
+#include "cpotentiometer.h"
 #include "canimationstatus.h"
 //
 // ################################################################################################
@@ -104,6 +105,12 @@ class CStairs
 
     /// ###########################################################################################
     /**
+      * @brief adjustPotentiometers
+      */
+    void adjustPotentiometers();
+
+    /// ###########################################################################################
+    /**
       * @brief getAnimation
       *
       * @param direction
@@ -123,19 +130,13 @@ class CStairs
 
     /// ###########################################################################################
     /**
-     * @brief executeAnimation
-     * @param currentTime
-     *
-     * @return true if animation is ongoing on one or all stairs otherwise false and ready for next
-     *         activation
-     */
-    bool executeAnimation(unsigned long currentTime);
-
-    /// ###########################################################################################
-    /**
-      * @brief synchronizeTimings
+      * @brief executeAnimation
+      * @param currentTime
+      *
+      * @return true if animation is ongoing on one or all stairs otherwise false and ready for next
+      *         activation
       */
-    void synchronizeTimings();
+    bool executeAnimation(unsigned long currentTime);
 
   private:
 
@@ -163,9 +164,11 @@ class CStairs
     ///
     CList<CStage> m_stage;
     CAnimationStatus m_animation;
-    unsigned short m_startDelay;
-    unsigned char m_brightnessStepWidth;
-    unsigned int m_stageHoldTime;
+
+    CPotentiometer<unsigned int> m_stageHoldTime;
+    CPotentiometer<unsigned short> m_startDelay;
+    CPotentiometer<unsigned char> m_brightnessStepWidth;
+
     bool m_verbose;
 
 };

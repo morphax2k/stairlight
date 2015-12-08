@@ -33,66 +33,57 @@
 
 // ################################################################################################
 // ################################################################################################
-
+//
 #include "Arduino.h"
 //
-#include "generic.h"
-//
 // ################################################################################################
 // ################################################################################################
 
-class CAnimationStatus
+template<class T>
+class CPotentiometer
 {
+    friend class CStairs;
+
   public:
 
     /// ###########################################################################################
     /**
-      * @brief The constructor
+      * The constructor
       */
-    CAnimationStatus();
+    CPotentiometer(T value)
+      : value(value),
+        analogPin(-1),
+        resistance(1) // be careful don't set it to zero otherwise it can cause an arithmetic error
+    {
+    }
 
     /// ###########################################################################################
     /**
-      * @brief Set the verbose level
-      *
-      * @param verbose  enable or disable verbose level of this class instance
-      */
-    void setVerbose(bool verbose);
-
-    /// ###########################################################################################
-    /**
-      * @brief setStatus
-      *
-      * @param direction
-      * @param animationStatus
-      *
+      * @brief readResistance
       * @return
       */
-    bool setStatus(Direction direction, AnimationStatus animationStatus);
-
-    /// ###########################################################################################
-    /**
-      * @brief getStatus
-      * @param direction
-      * @return
-      */
-    AnimationStatus getStatus(Direction direction) const;
-
-    /// ###########################################################################################
-    /**
-      * @brief isActive
-      *
-      * @param direction
-      *
-      * @return
-      */
-    bool isActive(Direction direction);
+    bool readResistance()
+    {
+      if (analogPin) {
+        resistance = analogRead(analogPin);
+        if (!resistance) {
+          // if we dont do that we risk a arithmetic error (e.g. division by zero)
+          resistance = 1;
+        }
+        return true;
+      }
+      return false;
+    }
 
   private:
 
     /// ###########################################################################################
     /// The attributes
     ///
-    AnimationStatus m_animationStatus[NumberOfDirections];
-    bool m_verbose;
+    int analogPin;
+    unsigned short resistance;
+    T value;
 };
+
+
+

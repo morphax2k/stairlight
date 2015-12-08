@@ -41,8 +41,15 @@
 
 CAnimationStatus::CAnimationStatus()
   : m_animationStatus({AnimationStatusOff, AnimationStatusOff}),
-    m_elements({0,0})
+    m_verbose(false)
 {
+}
+// ################################################################################################
+// ################################################################################################
+
+void CAnimationStatus::setVerbose(bool verbose)
+{
+  m_verbose = verbose;
 }
 
 // ################################################################################################
@@ -52,7 +59,9 @@ AnimationStatus CAnimationStatus::getStatus(Direction direction) const
 {
   // safty check
   if (direction >= NumberOfDirections){
-    Serial.println("CAnimationStatus::getStatus() (direction >= NumberOfDirections)");
+    if (m_verbose) {
+      Serial.println("CAnimationStatus::getStatus() (direction >= NumberOfDirections)");
+    }
     return  AnimationStatusOff;
   }
   return m_animationStatus[direction];
@@ -65,7 +74,9 @@ bool CAnimationStatus::setStatus(Direction direction, AnimationStatus animationS
 {
   // safty check
   if (direction >= NumberOfDirections){
-    Serial.println("CAnimationStatus::getStatus() (direction >= NumberOfDirections)");
+    if (m_verbose) {
+      Serial.println("CAnimationStatus::getStatus() (direction >= NumberOfDirections)");
+    }
     return  false;
   }
 
