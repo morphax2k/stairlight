@@ -39,11 +39,25 @@
 // ################################################################################################
 // ################################################################################################
 
+constexpr int N = 5;
+
+// ################################################################################################
+// ################################################################################################
+
 CStairs::CStairs()
-  : m_startDelay(1000),
+  : m_verbose(false),
+    m_startDelay(1000),
     m_brightnessStepWidth(1),
     m_stageHoldTime(10000)
 {
+}
+
+// ################################################################################################
+// ################################################################################################
+
+void CStairs::setVerbose(bool verbose)
+{
+  m_verbose = verbose;
 }
 
 // ################################################################################################
@@ -63,7 +77,9 @@ bool CStairs::addStage(int analogPinNumber)
     }
   }
 
+  // create an new stage and store it on the stage list (push back to have the correct order)
   CStage stage;
+  // the assigned analog pin on this stage
   stage.pwmPin = analogPinNumber;
 
   pinMode(stage.pwmPin, OUTPUT);
@@ -74,6 +90,23 @@ bool CStairs::addStage(int analogPinNumber)
 // ################################################################################################
 
 bool CStairs::addHoldTimePotentiometer(int analogPinNumber)
+{
+
+}
+
+// ################################################################################################
+// ################################################################################################
+
+bool CStairs::addStartDelayPotentiometer(int analogPinNumber)
+{
+
+}
+
+
+// ################################################################################################
+// ################################################################################################
+
+bool CStairs::addStepWidthPotentiometer(int analogPinNumber)
 {
 
 }
@@ -179,15 +212,6 @@ bool CStairs::executeAnimation(unsigned long currentTime)
 // ################################################################################################
 // ################################################################################################
 
-unsigned long * CStairs::getBeginTimeStamp(Direction direction)
-{
-  return &m_beginTimeStamp[direction];
-}
-
-// ################################################################################################
-// ################################################################################################
-
-
 CStairs::Stage CStairs::handleStage(const int i, const Direction direction, const unsigned long currentTime)
 {
   if (i < 0 || i > (m_stage.size() - 1)) {
@@ -211,12 +235,7 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
 
         stage->power = PowerOn;
         stage->brightness = 0;
-        stage->startDelay = /*
-                    (direction == DirectionDown)
-                            ? (i * StartDelay)
-                            : (((m_stage.size() - 1) - i) * StartDelay);
-                    */
-                            StartDelay;
+        stage->startDelay = m_startDelay;
 
 
         stage->direction = direction;
@@ -250,14 +269,14 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
 
           if (stage->brightness != 0xFF) {
 
-            if ((stage->brightness + BrightnessStepWidth) >= 0xFF) {
+            if ((stage->brightness + m_brightnessStepWidth) >= 0xFF) {
               // maximum brightness reached, enable hold
               stage->brightness = 0xFF;
               stage->holdTime = currentTime;
 
             } else {
 
-              stage->brightness += BrightnessStepWidth;
+              stage->brightness += m_brightnessStepWidth;
             }
 
             analogWrite(stage->pwmPin, stage->brightness);
@@ -269,7 +288,7 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
               return StageError;
             }
 
-            if (StageHoldTime <= (currentTime - stage->holdTime)) {
+            if (m_stageHoldTime <= (currentTime - stage->holdTime)) {
               stage->dim = DimDown;
               stage->holdTime = 0;
               // call recursive handleStage to enter one time case DimDown
@@ -283,13 +302,13 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
 
           if (stage->brightness != 0x00) {
 
-            if ((stage->brightness - BrightnessStepWidth) <= 0x00) {
+            if ((stage->brightness - m_brightnessStepWidth) <= 0x00) {
               // minimum brightness reached, disable
               stage->reset( true /* block next animation until all stages ready */);
               Serial.print("Led             = "); Serial.print(stage->pwmPin);
               Serial.println(" << block next animation until all stages ready");
             } else {
-              stage->brightness -= BrightnessStepWidth;
+              stage->brightness -= m_brightnessStepWidth;
             }
 
             analogWrite(stage->pwmPin, stage->brightness);

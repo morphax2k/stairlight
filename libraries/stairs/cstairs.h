@@ -56,13 +56,51 @@ class CStairs
 
     /// ###########################################################################################
     /**
-      * @brief addStage
+      * @brief Set the verbose level
+      *
+      * @param verbose  enable or disable verbose level of this class instance
+      */
+    void setVerbose(bool verbose);
+
+    /// ###########################################################################################
+    /**
+      * @brief Add a stage to this stair instance
       *
       * @param analogPinNumber    an analog pin with PWM support
       *
       * @return true if new stage was added other wise false (duplicate key entry)
       */
     bool addStage(int analogPinNumber);
+
+    /// ###########################################################################################
+    /**
+      * @brief addHoldTimePotentiometer
+      *
+      * @param analogPinNumber  an analog pin
+      *
+      * @return
+      */
+    bool addHoldTimePotentiometer(int analogPinNumber);
+
+    /// ###########################################################################################
+    /**
+      * @brief addStartDelayPotentiometer
+      *
+      * @param analogPinNumber  an analog pin
+      *
+      * @return
+      */
+    bool addStartDelayPotentiometer(int analogPinNumber);
+
+    /// ###########################################################################################
+    /**
+      * @brief addStepWidthPotentiometer
+      *
+      * @param analogPinNumber
+      *
+      * @return
+      */
+    bool addStepWidthPotentiometer(int analogPinNumber);
 
     /// ###########################################################################################
     /**
@@ -99,14 +137,6 @@ class CStairs
       */
     void synchronizeTimings();
 
-    /// ###########################################################################################
-    /**
-      * @brief getBeginTimeStamp
-      * @param direction
-      * @return
-      */
-    unsigned long * getBeginTimeStamp(Direction direction);
-
   private:
 
     /// ###########################################################################################
@@ -136,3 +166,6 @@ class CStairs
     unsigned short m_startDelay;
     unsigned char m_brightnessStepWidth;
     unsigned int m_stageHoldTime;
+    bool m_verbose;
+
+};

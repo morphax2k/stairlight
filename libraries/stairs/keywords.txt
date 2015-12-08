@@ -3,7 +3,7 @@
 # ################################################################################################
 # ################################################################################################
 #
-# Classes (KEYWORD1)
+# Classes                 KEYWORD1
 #
 CStage	                  KEYWORD1
 CStairs	                  KEYWORD1
@@ -17,8 +17,9 @@ AnimationStatus           KEYWORD1
 # ################################################################################################
 # ################################################################################################
 #
-# Methods and Functions   (KEYWORD2)
+# Methods and Functions   KEYWORD2
 #
+setVerbose                KEYWORD2
 addHoldTimePotentiometer  KEYWORD2
 addStage                  KEYWORD2
 setAnimation              KEYWORD2
