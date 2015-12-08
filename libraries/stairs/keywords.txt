@@ -1,0 +1,38 @@
+# Syntax  Coloring
+
+# ################################################################################################
+# ################################################################################################
+#
+# Classes (KEYWORD1)
+#
+CStage	                  KEYWORD1
+CStairs	                  KEYWORD1
+CList                     KEYWORD1
+CAnimationStatus          KEYWORD1
+Direction                 KEYWORD1
+Power                     KEYWORD1
+Dim                       KEYWORD1
+AnimationStatus           KEYWORD1
+
+# ################################################################################################
+# ################################################################################################
+#
+# Methods and Functions   (KEYWORD2)
+#
+addHoldTimePotentiometer  KEYWORD2
+addStage                  KEYWORD2
+setAnimation              KEYWORD2
+executeAnimation	        KEYWORD2
+getBeginTimeStamp	        KEYWORD2
+push_back                 KEYWORD2
+push_front                KEYWORD2
+pop_back	                KEYWORD2
+pop_front	                KEYWORD2
+begin                     KEYWORD2
+end                       KEYWORD2
+empty	                    KEYWORD2
+size	                    KEYWORD2
+clear	                    KEYWORD2
+reserve                   KEYWORD2
+capacity                  KEYWORD2
+
