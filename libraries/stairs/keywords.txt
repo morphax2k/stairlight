@@ -6,7 +6,7 @@
 # Classes                   KEYWORD1
 #
 CStage	                    KEYWORD1
-CStairs	                    KEYWORD1
+CStair	                    KEYWORD1
 CList                       KEYWORD1
 CAnimationStatus            KEYWORD1
 CPotentiometer              KEYWORD1

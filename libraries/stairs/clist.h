@@ -233,7 +233,7 @@ class CList
       */
     inline iterator value(int position)
     {
-      if (position < 0 || position>= endPosition)  {
+      if (position < 0 || position >= endPosition)  {
         return NULL;
       }
 

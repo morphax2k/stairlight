@@ -34,18 +34,22 @@
 //
 #include "Arduino.h"
 //
-#include "cstairs.h"
+#include "cstair.h"
 //
 // ################################################################################################
 // ################################################################################################
 
-static const unsigned long MaxHoldTimeMS      = 300000;                 // ~ 5 min
-static const unsigned long MaxHoldTimeDivider = MaxHoldTimeMS / 1023;
+constexpr unsigned long MaxHoldTimeMS         = 300000;                           // ~ 5 min
+constexpr unsigned long MaxHoldTimeDivider    = MaxHoldTimeMS / 1023;
+
+constexpr float MaxBrightnessStepWidth        = 10.0f;                            // max step width
+constexpr float MaxBrightnessStepWidthDivider = MaxBrightnessStepWidth / 1023.0;
+
 
 // ################################################################################################
 // ################################################################################################
 
-CStairs::CStairs()
+CStair::CStair()
   : m_verbose(false),
     m_startDelay(1000),
     m_brightnessStepWidth(1),
@@ -56,7 +60,7 @@ CStairs::CStairs()
 // ################################################################################################
 // ################################################################################################
 
-void CStairs::setVerbose(bool verbose)
+void CStair::setVerbose(bool verbose)
 {
   m_verbose = verbose;
   m_animation.setVerbose(verbose);
@@ -65,12 +69,12 @@ void CStairs::setVerbose(bool verbose)
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::addStage(int analogPinNumber)
+bool CStair::addStage(int analogPinNumber)
 {
   if (analogPinNumber < 0) {
     // unable to process
     if (m_verbose) {
-      Serial.println("CStairs::addStage(analogPinNumber) (invalid argument)");
+      Serial.println("CStair::addStage(analogPinNumber) (invalid argument)");
     }
     return false;
   }
@@ -94,12 +98,12 @@ bool CStairs::addStage(int analogPinNumber)
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::addHoldTimePotentiometer(int analogPinNumber)
+bool CStair::addHoldTimePotentiometer(int analogPinNumber)
 {
   if (analogPinNumber < 0) {
     // unable to process
     if (m_verbose) {
-      Serial.println("CStairs::addHoldTimePotentiometer(analogPinNumber) (invalid argument)");
+      Serial.println("CStair::addHoldTimePotentiometer(analogPinNumber) (invalid argument)");
     }
     return false;
   }
@@ -112,57 +116,94 @@ bool CStairs::addHoldTimePotentiometer(int analogPinNumber)
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::addStartDelayPotentiometer(int analogPinNumber)
+bool CStair::addStartDelayPotentiometer(int analogPinNumber)
 {
   if (analogPinNumber < 0) {
     // unable to process
     if (m_verbose) {
-      Serial.println("CStairs::addStartDelayPotentiometer(analogPinNumber) (invalid argument)");
+      Serial.println("CStair::addStartDelayPotentiometer(analogPinNumber) (invalid argument)");
     }
     return false;
   }
+
+  m_startDelay.analogPin = analogPinNumber;
+  pinMode(analogPinNumber, INPUT);
+  return true;
 }
 
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::addStepWidthPotentiometer(int analogPinNumber)
+bool CStair::addStepWidthPotentiometer(int analogPinNumber)
 {
   if (analogPinNumber < 0) {
     // unable to process
     if (m_verbose) {
-      Serial.println("CStairs::addStepWidthPotentiometer(analogPinNumber) (invalid argument)");
+      Serial.println("CStair::addStepWidthPotentiometer(analogPinNumber) (invalid argument)");
     }
     return false;
   }
+
+  m_brightnessStepWidth.analogPin = analogPinNumber;
+  pinMode(analogPinNumber, INPUT);
+  return true;
 }
 
 // ################################################################################################
 // ################################################################################################
 
-void CStairs::adjustPotentiometers()
+void CStair::adjustPotentiometers()
 {
+  // adjust the hold time (light period)
   if (m_stageHoldTime.analogPin >= 0) {
     if (!m_stageHoldTime.readResistance()) {
       if (m_verbose) {
-        Serial.println("CStairs::adjustPotentiometers() (m_stageHoldTime.readResistance() failed)");
+        Serial.println("CStair::adjustPotentiometers() (m_stageHoldTime.readResistance() failed)");
       }
     }
 
+    // max possible value is MaxHoldTimeMS ( ~ 300 seconds equivalent to ~ 5 minutes)
     m_stageHoldTime.value = ((m_stageHoldTime.resistance * MaxHoldTimeMS) / MaxHoldTimeDivider);
 
     if (m_verbose) {
 
-      Serial.print("Adjust addHoldTimePotentiometer = ");
+      Serial.print("Adjust HoldTimePotentiometer = ");
       Serial.print(m_stageHoldTime.value);
       Serial.print(" ms resistance(");
       Serial.print(m_stageHoldTime.resistance);
       Serial.println(")");
+    }
+  }
 
-      Serial.println((m_stageHoldTime.resistance * MaxHoldTimeMS));
-      Serial.println(MaxHoldTimeMS);
-      Serial.println(((m_stageHoldTime.resistance * MaxHoldTimeMS) / MaxHoldTimeDivider));
+  // adjust the step width of a lamp (pwm signal takes 0...254),
+  // with wich width should the brightness of the lamp increased?
+  if (m_brightnessStepWidth.analogPin >= 0) {
+    if (!m_brightnessStepWidth.readResistance()) {
+      if (m_verbose) {
+        Serial.println("CStair::adjustPotentiometers() (m_brightnessStepWidth.readResistance() failed)");
+      }
+    }
 
+    // max possible value is MaxBrightnessStepWidth ( 10 steps out of 255)
+    int integer = (int)((float)m_brightnessStepWidth.resistance * MaxBrightnessStepWidthDivider);
+    m_brightnessStepWidth.value = (!integer) ? 1 : integer;
+
+    if (m_verbose) {
+
+      Serial.print("Adjust brightnessStepWidthPotentiometer = ");
+      Serial.print(m_brightnessStepWidth.value);
+      Serial.print(" step(s) resistance(");
+      Serial.print(m_brightnessStepWidth.resistance);
+      Serial.println(")");
+      Serial.println(MaxBrightnessStepWidthDivider);
+    }
+  }
+
+  if (m_brightnessStepWidth.analogPin >= 0) {
+    if (!m_brightnessStepWidth.readResistance()) {
+      if (m_verbose) {
+        Serial.println("CStair::adjustPotentiometers() (m_brightnessStepWidth.readResistance() failed)");
+      }
     }
   }
 }
@@ -170,11 +211,11 @@ void CStairs::adjustPotentiometers()
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::getAnimation(Direction direction, AnimationStatus * animationStatus) const
+bool CStair::getAnimation(Direction direction, AnimationStatus * animationStatus) const
 {
   if (!animationStatus) {
     if (m_verbose) {
-      Serial.println("CStairs::getAnimation(..., animationStatus) (invalid argument)");
+      Serial.println("CStair::getAnimation(..., animationStatus) (invalid argument)");
     }
     return false;
   }
@@ -186,7 +227,7 @@ bool CStairs::getAnimation(Direction direction, AnimationStatus * animationStatu
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::setAnimation(Direction direction, AnimationStatus animationStatus)
+bool CStair::setAnimation(Direction direction, AnimationStatus animationStatus)
 {
   return m_animation.setStatus(direction, animationStatus);
 }
@@ -194,7 +235,7 @@ bool CStairs::setAnimation(Direction direction, AnimationStatus animationStatus)
 // ################################################################################################
 // ################################################################################################
 
-bool CStairs::executeAnimation(unsigned long currentTime)
+bool CStair::executeAnimation(unsigned long currentTime)
 {
   Stage stageStatus;
 
@@ -263,11 +304,11 @@ bool CStairs::executeAnimation(unsigned long currentTime)
 // ################################################################################################
 // ################################################################################################
 
-CStairs::Stage CStairs::handleStage(const int i, const Direction direction, const unsigned long currentTime)
+CStair::Stage CStair::handleStage(const int i, const Direction direction, const unsigned long currentTime)
 {
   if (i < 0 || i > (m_stage.size() - 1)) {
     if (m_verbose) {
-      Serial.println("CStairs::handleStage() unhandable case, index out of bounds");
+      Serial.println("CStair::handleStage() unhandable case, index out of bounds");
     }
     // unhandable case, index out of bounds
     return StageError;
@@ -277,7 +318,7 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
 
   if (!stage) {
     if (m_verbose) {
-      Serial.println("CStairs::handleStage() !stage");
+      Serial.println("CStair::handleStage() !stage");
     }
     // FIXME: assert?!
     return StageError;
@@ -311,7 +352,7 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
       // collision detection
       if (stage->direction != direction) {
         if (m_verbose) {
-          Serial.println("CStairs::handleStage() (stage->direction != direction)");
+          Serial.println("CStair::handleStage() (stage->direction != direction)");
         }
         return StageAlreadyInUse;
       }
@@ -343,7 +384,7 @@ CStairs::Stage CStairs::handleStage(const int i, const Direction direction, cons
 
             if (stage->holdTime == 0) {
               if (m_verbose) {
-                Serial.println("CStairs::handleStage() (ASSERT !!! stage->holdTime == 0)");
+                Serial.println("CStair::handleStage() (ASSERT !!! stage->holdTime == 0)");
               }
               return StageError;
             }

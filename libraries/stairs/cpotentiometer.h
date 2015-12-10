@@ -42,7 +42,7 @@
 template<class T>
 class CPotentiometer
 {
-    friend class CStairs;
+    friend class CStair;
 
   public:
 

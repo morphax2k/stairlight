@@ -42,7 +42,7 @@
 
 class CStage
 {
-    friend class CStairs;
+    friend class CStair;
 
   public:
 

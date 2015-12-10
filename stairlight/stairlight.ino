@@ -33,7 +33,7 @@
 // ################################################################################################
 //
 #include "Arduino.h"
-#include "cstairs.h"
+#include "cstair.h"
 //
 // ################################################################################################
 // ################################################################################################
@@ -53,7 +53,7 @@
 // ################################################################################################
 
 bool isAnimationRunning;
-CStairs stairs;
+CStair stair;
 
 // ################################################################################################
 // ################################################################################################
@@ -65,21 +65,21 @@ void setup()
 
 #if VERBOSE
   Serial.begin( 9600);
-  stairs.setVerbose(true);
+  stair.setVerbose(true);
 #endif
 
-  stairs.addHoldTimePotentiometer(    A0 /* analog in port*/);
-//stairs.addStartDelayPotentiometer(  A1 /* analog in port*/);
-//stairs.addStepWidthPotentiometer(   A2 /* analog in port*/);
-
-  stairs.addStage( 2 /* analog pwm pin 2 */);
-  stairs.addStage( 3 /* analog pwm pin 3 */);
-  stairs.addStage( 4 /* analog pwm pin 4 */);
-  stairs.addStage( 5 /* analog pwm pin 5 */);
-  stairs.addStage( 6 /* analog pwm pin 6 */);
-  stairs.addStage( 7 /* analog pwm pin 7 */);
-  stairs.addStage( 8 /* analog pwm pin 8 */);
-  stairs.addStage( 9 /* analog pwm pin 9 */);
+  stair.addStepWidthPotentiometer(   A0 /* analog in port*/);
+  stair.addStartDelayPotentiometer(  A1 /* analog in port*/);
+  stair.addHoldTimePotentiometer(    A2 /* analog in port*/);
+  
+  stair.addStage( 2 /* analog pwm pin 2 */);
+  stair.addStage( 3 /* analog pwm pin 3 */);
+  stair.addStage( 4 /* analog pwm pin 4 */);
+  stair.addStage( 5 /* analog pwm pin 5 */);
+  stair.addStage( 6 /* analog pwm pin 6 */);
+  stair.addStage( 7 /* analog pwm pin 7 */);
+  stair.addStage( 8 /* analog pwm pin 8 */);
+  stair.addStage( 9 /* analog pwm pin 9 */);
 
   pinMode(buttonUp,               INPUT);
   pinMode(buttonDown,             INPUT);
@@ -88,7 +88,7 @@ void setup()
   pinMode(lightSensor,            INPUT);   // digital pin as input
   pinMode(lightSensorStatusLed,   OUTPUT);
 
-  stairs.adjustPotentiometers();
+  stair.adjustPotentiometers();
 }
 
 // ################################################################################################
@@ -97,7 +97,7 @@ void setup()
 bool checkButton(Direction direction) {
 
   AnimationStatus animationStatus;
-  if (stairs.getAnimation(direction, &animationStatus)) {
+  if (stair.getAnimation(direction, &animationStatus)) {
 
     if (animationStatus == AnimationStatusOn && isAnimationRunning == false) {
       isAnimationRunning = true;
@@ -133,10 +133,10 @@ void loop()
     int buttonUpStatus    = digitalRead(buttonUp);
     if (buttonUpStatus == HIGH){
 #if VERBOSE
-      Serial.println("stairs.setAnimation(DirectionUp, AnimationStatusOn)");
+      Serial.println("stair.setAnimation(DirectionUp, AnimationStatusOn)");
 #endif
       // Wenn der buttonUp gedrückt ist (Das Spannungssignal ist hoch)
-      stairs.setAnimation(DirectionUp, AnimationStatusOn);
+      stair.setAnimation(DirectionUp, AnimationStatusOn);
     }
   }
 
@@ -147,11 +147,11 @@ void loop()
       Serial.println("setAnimation(DirectionDown, AnimationStatusOn)");
 #endif
       // Wenn der buttonDown gedrückt ist (Das Spannungssignal ist hoch)
-      stairs.setAnimation(DirectionDown, AnimationStatusOn);
+      stair.setAnimation(DirectionDown, AnimationStatusOn);
     }
   }
   unsigned long currentTime = millis();
-  isAnimationRunning = stairs.executeAnimation(currentTime);
+  isAnimationRunning = stair.executeAnimation(currentTime);
 
   delay(2);
 }
