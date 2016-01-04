@@ -50,8 +50,9 @@ class CPotentiometer
     /**
       * The constructor
       */
-    CPotentiometer(T value)
-      : value(value),
+    CPotentiometer(T defaultValue, float factor)
+      : defaultValue(defaultValue),
+        factor(factor),
         analogPin(-1),
         resistance(1) // be careful don't set it to zero otherwise it can cause an arithmetic error
     {
@@ -70,9 +71,33 @@ class CPotentiometer
           // if we dont do that we risk a arithmetic error (e.g. division by zero)
           resistance = 1;
         }
+
+        smoothResistance = (smoothResistance * 10) + (resistance * 6);
+        smoothResistance = (smoothResistance + 8) >> 4;
+
         return true;
       }
       return false;
+    }
+
+    /// ###########################################################################################
+    /**
+      * @brief value
+      * @param withFactor
+      * @param selectSmooth
+      * @return
+      */
+    unsigned long value(bool withFactor = true, bool selectSmooth = true)
+    {
+      unsigned long ret = (withFactor)
+          ? (selectSmooth)
+             ? (smoothResistance * factor)
+             : (resistance * factor)
+          : ((selectSmooth)
+             ? (smoothResistance )
+             : (resistance ));
+
+      return (ret) ? ret : 1;
     }
 
   private:
@@ -80,9 +105,11 @@ class CPotentiometer
     /// ###########################################################################################
     /// The attributes
     ///
+    T defaultValue;
     int analogPin;
-    unsigned short resistance;
-    T value;
+    unsigned long resistance;
+    float factor;
+    unsigned short smoothResistance;
 };
 
 

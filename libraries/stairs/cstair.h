@@ -106,8 +106,9 @@ class CStair
     /// ###########################################################################################
     /**
       * @brief adjustPotentiometers
+      * @param currentTime
       */
-    void adjustPotentiometers();
+    void adjustPotentiometers(const unsigned long currentTime = 0);
 
     /// ###########################################################################################
     /**
@@ -136,7 +137,7 @@ class CStair
       * @return true if animation is ongoing on one or all stairs otherwise false and ready for next
       *         activation
       */
-    bool executeAnimation(unsigned long currentTime);
+    bool executeAnimation(const unsigned long currentTime);
 
   private:
 
@@ -169,6 +170,8 @@ class CStair
     CPotentiometer<unsigned short> m_startDelay;
     CPotentiometer<unsigned char> m_brightnessStepWidth;
 
+    unsigned long m_lastPotentiometerAdjustment;
     bool m_verbose;
+    bool m_isAnimationRunning;
 
 };

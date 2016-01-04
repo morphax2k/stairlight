@@ -39,21 +39,25 @@
 // ################################################################################################
 // ################################################################################################
 
-constexpr unsigned long MaxHoldTimeMS         = 300000;                           // ~ 5 min
-constexpr unsigned long MaxHoldTimeDivider    = MaxHoldTimeMS / 1023;
+constexpr unsigned short OneKilo        = 1024;
 
-constexpr float MaxBrightnessStepWidth        = 10.0f;                            // max step width
-constexpr float MaxBrightnessStepWidthDivider = MaxBrightnessStepWidth / 1023.0;
+constexpr unsigned long MaxHoldTimeMS   = 300000;                    // 5 min
 
+constexpr float MaxBrightnessStepWidth        = OneKilo;             // max 1024
+constexpr float MaxStartDelay                 = 2 * OneKilo;         // 2048 ms
+
+constexpr int PotentiometerAdjustmentTimeout  = OneKilo;             // 5 sec
 
 // ################################################################################################
 // ################################################################################################
 
 CStair::CStair()
   : m_verbose(false),
-    m_startDelay(1000),
-    m_brightnessStepWidth(1),
-    m_stageHoldTime(10000)
+    m_startDelay(1000, (MaxStartDelay / OneKilo)),
+    m_brightnessStepWidth(1, (255.0f / OneKilo)),
+    m_stageHoldTime(10000, (MaxHoldTimeMS / OneKilo)),
+    m_lastPotentiometerAdjustment(0),
+    m_isAnimationRunning(false)
 {
 }
 
@@ -152,8 +156,20 @@ bool CStair::addStepWidthPotentiometer(int analogPinNumber)
 // ################################################################################################
 // ################################################################################################
 
-void CStair::adjustPotentiometers()
+void CStair::adjustPotentiometers(const unsigned long currentTime)
 {
+  if (m_isAnimationRunning) {
+    // skip check
+    return;
+  }
+
+  if (currentTime!=0
+      && (currentTime - m_lastPotentiometerAdjustment ) < PotentiometerAdjustmentTimeout) {
+    return;
+  }
+
+  m_lastPotentiometerAdjustment = currentTime;
+
   // adjust the hold time (light period)
   if (m_stageHoldTime.analogPin >= 0) {
     if (!m_stageHoldTime.readResistance()) {
@@ -162,16 +178,17 @@ void CStair::adjustPotentiometers()
       }
     }
 
-    // max possible value is MaxHoldTimeMS ( ~ 300 seconds equivalent to ~ 5 minutes)
-    m_stageHoldTime.value = ((m_stageHoldTime.resistance * MaxHoldTimeMS) / MaxHoldTimeDivider);
-
     if (m_verbose) {
 
-      Serial.print("Adjust HoldTimePotentiometer = ");
-      Serial.print(m_stageHoldTime.value);
-      Serial.print(" ms resistance(");
+      //Serial.print("Adjust HoldTimePotentiometer = ");
+      Serial.print("H ");
+      Serial.print(m_stageHoldTime.factor);
+      Serial.print(" smooth (");
+      Serial.print(m_stageHoldTime.smoothResistance);
+      Serial.print(") R = ");
       Serial.print(m_stageHoldTime.resistance);
-      Serial.println(")");
+      Serial.print(") final = ");
+      Serial.println(m_stageHoldTime.value());
     }
   }
 
@@ -184,26 +201,38 @@ void CStair::adjustPotentiometers()
       }
     }
 
-    // max possible value is MaxBrightnessStepWidth ( 10 steps out of 255)
-    int integer = (int)((float)m_brightnessStepWidth.resistance * MaxBrightnessStepWidthDivider);
-    m_brightnessStepWidth.value = (!integer) ? 1 : integer;
+    if (1) {
 
-    if (m_verbose) {
-
-      Serial.print("Adjust brightnessStepWidthPotentiometer = ");
-      Serial.print(m_brightnessStepWidth.value);
-      Serial.print(" step(s) resistance(");
+      //Serial.print("Adjust brightnessStepWidthPotentiometer = ");
+      Serial.print("B ");
+      Serial.print(m_brightnessStepWidth.factor);
+      Serial.print(" smooth (");
+      Serial.print(m_brightnessStepWidth.smoothResistance);
+      Serial.print(") R = ");
       Serial.print(m_brightnessStepWidth.resistance);
-      Serial.println(")");
-      Serial.println(MaxBrightnessStepWidthDivider);
+      Serial.print(") final = ");
+      Serial.println(m_brightnessStepWidth.value());
     }
   }
 
-  if (m_brightnessStepWidth.analogPin >= 0) {
-    if (!m_brightnessStepWidth.readResistance()) {
+  if (m_startDelay.analogPin >= 0) {
+    if (!m_startDelay.readResistance()) {
       if (m_verbose) {
-        Serial.println("CStair::adjustPotentiometers() (m_brightnessStepWidth.readResistance() failed)");
+        Serial.println("CStair::adjustPotentiometers() (m_startDelay.readResistance() failed)");
       }
+    }
+
+    if (1) {
+
+      //Serial.print("Adjust startDelayPotentiometer = ");
+      Serial.print("D ");
+      Serial.print(m_startDelay.factor);
+      Serial.print(" smooth (");
+      Serial.print(m_startDelay.smoothResistance);
+      Serial.print(") R = ");
+      Serial.print(m_startDelay.resistance);
+      Serial.print(") final = ");
+      Serial.println(m_startDelay.value());
     }
   }
 }
@@ -235,7 +264,7 @@ bool CStair::setAnimation(Direction direction, AnimationStatus animationStatus)
 // ################################################################################################
 // ################################################################################################
 
-bool CStair::executeAnimation(unsigned long currentTime)
+bool CStair::executeAnimation(const unsigned long currentTime)
 {
   Stage stageStatus;
 
@@ -298,7 +327,9 @@ bool CStair::executeAnimation(unsigned long currentTime)
     }
   }
 
-  return !areAllStagesPerDirectionReady;
+  m_isAnimationRunning = !areAllStagesPerDirectionReady;
+
+  return m_isAnimationRunning;
 }
 
 // ################################################################################################
@@ -331,7 +362,7 @@ CStair::Stage CStair::handleStage(const int i, const Direction direction, const 
 
         stage->power = PowerOn;
         stage->brightness = 0;
-        stage->startDelay = m_startDelay.value;
+        stage->startDelay = m_startDelay.value();
 
 
         stage->direction = direction;
@@ -351,10 +382,11 @@ CStair::Stage CStair::handleStage(const int i, const Direction direction, const 
 
       // collision detection
       if (stage->direction != direction) {
-        if (m_verbose) {
-          Serial.println("CStair::handleStage() (stage->direction != direction)");
-        }
-        return StageAlreadyInUse;
+        // be careful this log can flood serial port
+        // if (m_verbose) {
+        //   Serial.println("CStair::handleStage() (stage->direction != direction)");
+        // }
+        return StageAlreadyInUse; // normal behaviour
       }
 
       switch (stage->dim) {
@@ -368,14 +400,14 @@ CStair::Stage CStair::handleStage(const int i, const Direction direction, const 
 
           if (stage->brightness != 0xFF) {
 
-            if ((stage->brightness + m_brightnessStepWidth.value) >= 0xFF) {
+            if ((stage->brightness + m_brightnessStepWidth.value()) >= 0xFF) {
               // maximum brightness reached, enable hold
               stage->brightness = 0xFF;
               stage->holdTime = currentTime;
 
             } else {
 
-              stage->brightness += m_brightnessStepWidth.value;
+              stage->brightness += m_brightnessStepWidth.value();
             }
 
             analogWrite(stage->pwmPin, stage->brightness);
@@ -389,7 +421,7 @@ CStair::Stage CStair::handleStage(const int i, const Direction direction, const 
               return StageError;
             }
 
-            if (m_stageHoldTime.value <= (currentTime - stage->holdTime)) {
+            if (m_stageHoldTime.value() <= (currentTime - stage->holdTime)) {
               stage->dim = DimDown;
               stage->holdTime = 0;
               // call recursive handleStage to enter one time case DimDown
@@ -403,7 +435,7 @@ CStair::Stage CStair::handleStage(const int i, const Direction direction, const 
 
           if (stage->brightness != 0x00) {
 
-            if ((stage->brightness - m_brightnessStepWidth.value) <= 0x00) {
+            if ((stage->brightness - m_brightnessStepWidth.value()) <= 0x00) {
               // minimum brightness reached, disable
               stage->reset( true /* block next animation until all stages ready */);
               if (m_verbose) {
@@ -411,7 +443,7 @@ CStair::Stage CStair::handleStage(const int i, const Direction direction, const 
                 Serial.println(" << block next animation until all stages ready");
               }
             } else {
-              stage->brightness -= m_brightnessStepWidth.value;
+              stage->brightness -= m_brightnessStepWidth.value();
             }
 
             analogWrite(stage->pwmPin, stage->brightness);

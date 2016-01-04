@@ -116,6 +116,10 @@ bool checkButton(Direction direction) {
 
 void loop()
 {
+  unsigned long currentTime = millis();
+
+  stair.adjustPotentiometers(currentTime);
+  
   if (digitalRead(lightSensor) == LOW) {
     // switch of the status led because the sensor means it is light enough
     digitalWrite(lightSensorStatusLed, LOW);
@@ -150,7 +154,7 @@ void loop()
       stair.setAnimation(DirectionDown, AnimationStatusOn);
     }
   }
-  unsigned long currentTime = millis();
+  
   isAnimationRunning = stair.executeAnimation(currentTime);
 
   delay(2);
