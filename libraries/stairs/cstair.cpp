@@ -313,21 +313,20 @@ bool CStair::executeAnimation(const unsigned long currentTime)
           }
         }
       }
-
-      // this direction reaches the end, all stages are done with there animation
-      // let reset the animation status
-      if (areAllStagesReady) {
-        m_animation.setStatus((Direction) direction, AnimationStatusOff);
-        for (int i =  0; i <  m_stage.size(); ++i) {
-          if (m_stage.value(i)->direction == direction) {
-            m_stage.value(i)->reset();
-          }
-        }
-      }
     }
   }
 
   m_isAnimationRunning = !areAllStagesPerDirectionReady;
+
+  // all direction reaches the end, all stages are done with there animation
+  // let reset the animation status
+  if (!m_isAnimationRunning) {
+    m_animation.setStatus(DirectionUp,    AnimationStatusOff);
+    m_animation.setStatus(DirectionDown,  AnimationStatusOff);
+    for (int i =  0; i <  m_stage.size(); ++i) {
+      m_stage.value(i)->reset();
+    }
+  }
 
   return m_isAnimationRunning;
 }
